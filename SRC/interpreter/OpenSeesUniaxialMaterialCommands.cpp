@@ -89,6 +89,8 @@ void* OPS_ParallelMaterial();
 void* OPS_SeriesMaterial();
 void* OPS_EPPGapMaterial();
 void* OPS_ENTMaterial();
+void* OPS_SDBolt();
+void* OPS_Joint01();
 void* OPS_Steel01();
 void* OPS_Steel02();
 void* OPS_SteelFractureDI();
@@ -310,6 +312,10 @@ static int setUpUniaxialMaterials(void) {
       std::make_pair("ElasticPPGap", &OPS_EPPGapMaterial));
   uniaxialMaterialsMap.insert(
       std::make_pair("ENT", &OPS_ENTMaterial));
+  uniaxialMaterialsMap.insert(
+      std::make_pair("SDBolt", &OPS_SDBolt));
+  uniaxialMaterialsMap.insert(
+      std::make_pair("Joint01", &OPS_Joint01));
   uniaxialMaterialsMap.insert(
       std::make_pair("Steel01", &OPS_Steel01));
   uniaxialMaterialsMap.insert(

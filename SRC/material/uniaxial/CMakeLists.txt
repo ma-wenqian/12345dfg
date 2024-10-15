@@ -165,7 +165,9 @@ target_sources(OPS_Material
       SLModel.cpp
       SmoothPSConcrete.cpp
       StainlessECThermal.cpp
+      SDBolt.cpp
       Steel01.cpp
+      Joint01.cpp
       Steel01Thermal.cpp
       Steel02.cpp
       Steel02Fatigue.cpp
@@ -292,6 +294,8 @@ target_sources(OPS_Material
       SLModel.h
       SmoothPSConcrete.h
       StainlessECThermal.h
+      SDBolt.h
+      Joint01.h
       Steel01.h
       Steel01Thermal.h
       Steel02.h
