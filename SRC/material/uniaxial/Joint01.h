@@ -19,44 +19,45 @@
 ** ****************************************************************** */
                                                                         
 // $Revision: 1.7 $
-// $Date: 2008-08-26 16:30:55 $
+// $Date: 2024-10-15 16:30:55 $
 // $Source: /usr/local/cvs/OpenSees/SRC/material/uniaxial/Joint01.h,v $
                                                                         
                                                                         
 #ifndef Joint01_h
 #define Joint01_h
 
-// Written: fmk 
-// Created: 07/98
-// Revision: A
+// Written: Wenqian Ma
+// Created: 2024-10
+// Revision: 
 //
 // Description: This file contains the class definition for 
 // Joint01. Joint01 provides the abstraction
 // of an viscoelastic uniaxial material,
-// i.e. stress = E*strain + eta*strainrate
+// Totally 20 parameters are required.
+// K1ep, fbyp, K1pp, K2ep, K3ep, G1p, G2p,
+// K1en, fbyn, K1pn, K2en, K3en, G1n, G2n,
+// Kl, fsy, Kse, Ksp, Fdp, Fdn
 
 
 #include <UniaxialMaterial.h>
+
 #define MAT_TAG_Joint01 20241014
+
 class Joint01 : public UniaxialMaterial
 {
   public:
-    Joint01(int tag, double E, double eta = 0.0);
-    Joint01(int tag, double Epos, double eta, double Eneg);
+    Joint01(int tag, double K1ep, double fbyp, double K1pp, double K2ep, double K3ep, double G1p, double G2p, 
+            double K1en, double fbyn, double K1pn, double K2en, double K3en, double G1n, double G2n, 
+            double Kl, double fsy, double Kse, double Ksp, double Fdp, double Fdn);
+    
     Joint01();
     ~Joint01();
 
     const char *getClassType(void) const {return "Joint01";}
 
     int setTrialStrain(double strain, double strainRate = 0.0); 
-    int setTrial(double strain, double &stress, double &tangent, double strainRate = 0.0); 
-    double getStrain(void) {return trialStrain;}
-    double getStrainRate(void) {return trialStrainRate;}
     double getStress(void);
     double getTangent(void);
-    double getDampTangent(void) {return eta;}
-    double getInitialTangent(void);
-
     int commitState(void);
     int revertToLastCommit(void);    
     int revertToStart(void);        
@@ -66,32 +67,25 @@ class Joint01 : public UniaxialMaterial
     int sendSelf(int commitTag, Channel &theChannel);  
     int recvSelf(int commitTag, Channel &theChannel, 
         FEM_ObjectBroker &theBroker);
-    
-    void Print(OPS_Stream &s, int flag =0);
-    
-    int setParameter(const char **argv, int argc, Parameter &param);
-    int updateParameter(int parameterID, Information &info);
 
-    // AddingSensitivity:BEGIN //////////////////////////////////////////
-    int activateParameter(int parameterID);
-    double getStressSensitivity(int gradIndex, bool conditional);
-    double getTangentSensitivity(int gradIndex);
-    double getInitialTangentSensitivity(int gradIndex);
-    int commitSensitivity(double strainGradient, int gradIndex, int numGrads);
-    // AddingSensitivity:END ///////////////////////////////////////////
-
-  protected:
     
   private:
+    // 20 input parameters
+    double K1ep, fbyp, K1pp, K2ep, K3ep, G1p, G2p;
+    double K1en, fbyn, K1pn, K2en, K3en, G1n, G2n;
+    double Kl, fsy, Kse, Ksp, Fdp, Fdn;
     double trialStrain;
     double trialStrainRate;
-    double Epos;
-    double Eneg;
-    double eta;
-
-    // AddingSensitivity:BEGIN //////////////////////////////////////////
-    int parameterID;
-    // AddingSensitivity:END ///////////////////////////////////////////
+    // cālculated values
+    double Vsy;
+    double fbyp, V1yp, V2yp, V3yp, Vdp;
+    double fbyn, V1yn, V2yn, V3yn, Vdn;
+    double stressBolt, stress1, stress2, stress3;
+    // 应力计算方法
+    double calculateStressBolt(double v);
+    double calculateStress1(double v);
+    double calculateStress2(double v);
+    double calculateStress3(double v);
 };
 
 

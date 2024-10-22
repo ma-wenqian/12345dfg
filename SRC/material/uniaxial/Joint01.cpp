@@ -43,85 +43,80 @@
 
 #include <elementAPI.h>
 
-void *
-OPS_Joint01(void)
-{
-  // Pointer to a uniaxial material that will be returned
-  UniaxialMaterial *theMaterial = 0;
+// void *
+// OPS_Joint01(void)
+// {
+//   // Pointer to a uniaxial material that will be returned
+//   UniaxialMaterial *theMaterial = 0;
 
-  if (OPS_GetNumRemainingInputArgs() < 2) {
-    opserr << "Invalid #args,  want: uniaxialMaterial Elastic tag? E? <eta?> <Eneg?> ... " << endln;
-    return 0;
-  }
+//   if (OPS_GetNumRemainingInputArgs() < 2) {
+//     opserr << "Invalid #args,  want: uniaxialMaterial Elastic tag? E? <eta?> <Eneg?> ... " << endln;
+//     return 0;
+//   }
   
-  int iData[1];
-  double dData[3];
-  int numData = 1;
-  if (OPS_GetIntInput(&numData, iData) != 0) {
-    opserr << "WARNING invalid tag for uniaxialMaterial Elastic" << endln;
-    return 0;
-  }
+//   int iData[1];
+//   double dData[3];
+//   int numData = 1;
+//   if (OPS_GetIntInput(&numData, iData) != 0) {
+//     opserr << "WARNING invalid tag for uniaxialMaterial Elastic" << endln;
+//     return 0;
+//   }
 
-  numData = OPS_GetNumRemainingInputArgs();
+//   numData = OPS_GetNumRemainingInputArgs();
 
-  if (numData >= 3) {
-    numData = 3;
-    if (OPS_GetDoubleInput(&numData, dData) != 0) {
-      opserr << "Invalid data for uniaxial Elastic " << iData[0] << endln;
-      return 0;	
-    }
-  } else if (numData >= 2) {
-    numData = 2;
-    if (OPS_GetDoubleInput(&numData, dData) != 0) {
-      opserr << "Invalid data for uniaxial Elastic " << iData[0] << endln;
-      return 0;
-    }
-    dData[2] = dData[0];
-  } else {
-    numData = 1;
-    if (OPS_GetDoubleInput(&numData, dData) != 0) {
-      opserr << "Invalid data for uniaxialMaterial Elastic " << iData[0] << endln;
-      return 0;	
-    }
-    dData[1] = 0.0;
-    dData[2] = dData[0];
-  }
+//   if (numData >= 3) {
+//     numData = 3;
+//     if (OPS_GetDoubleInput(&numData, dData) != 0) {
+//       opserr << "Invalid data for uniaxial Elastic " << iData[0] << endln;
+//       return 0;	
+//     }
+//   } else if (numData >= 2) {
+//     numData = 2;
+//     if (OPS_GetDoubleInput(&numData, dData) != 0) {
+//       opserr << "Invalid data for uniaxial Elastic " << iData[0] << endln;
+//       return 0;
+//     }
+//     dData[2] = dData[0];
+//   } else {
+//     numData = 1;
+//     if (OPS_GetDoubleInput(&numData, dData) != 0) {
+//       opserr << "Invalid data for uniaxialMaterial Elastic " << iData[0] << endln;
+//       return 0;	
+//     }
+//     dData[1] = 0.0;
+//     dData[2] = dData[0];
+//   }
 
-  // Parsing was successful, allocate the material
-  theMaterial = new Joint01(iData[0], dData[0], dData[1], dData[2]);
-  if (theMaterial == 0) {
-    opserr << "WARNING could not create uniaxialMaterial of type Joint01" << endln;
-    return 0;
-  }
+//   // Parsing was successful, allocate the material
+//   theMaterial = new Joint01(iData[0], dData[0], dData[1], dData[2]);
+//   if (theMaterial == 0) {
+//     opserr << "WARNING could not create uniaxialMaterial of type Joint01" << endln;
+//     return 0;
+//   }
 
-  return theMaterial;
-}
-
-
-Joint01::Joint01(int tag, double e, double et)
-:UniaxialMaterial(tag,MAT_TAG_Joint01),
- trialStrain(0.0),  trialStrainRate(0.0),
- Epos(e), Eneg(e), eta(et), parameterID(0)
-{
-
-}
+//   return theMaterial;
+// }
 
 
-Joint01::Joint01(int tag, double ep, double et, double en)
-:UniaxialMaterial(tag,MAT_TAG_Joint01),
- trialStrain(0.0),  trialStrainRate(0.0),
- Epos(ep), Eneg(en), eta(et), parameterID(0)
-{
-
+Joint01::Joint01(int tag, double K1ep, double fbyp, double K1pp, double K2ep, double K3ep, double G1p, double G2p,
+                 double K1en, double fbyn, double K1pn, double K2en, double K3en, double G1n, double G2n,
+                 double Kl, double fsy, double Kse, double Ksp, double Fdp, double Fdn)
+  : UniaxialMaterial(tag, MAT_TAG_Joint01), K1ep(K1ep), fbyp(fbyp), K1pp(K1pp), K2ep(K2ep), K3ep(K3ep), G1p(G1p), G2p(G2p),
+    K1en(K1en), fbyn(fbyn), K1pn(K1pn), K2en(K2en), K3en(K3en), G1n(G1n), G2n(G2n),
+    Kl(Kl), fsy(fsy), Kse(Kse), Ksp(Ksp), Fdp(Fdp), Fdn(Fdn) {
+    trialStrain = 0.0;
+    trialStrainRate = 0.0;
+    stressBolt = stress1 = stress2 = stress3 = 0.0;
 }
 
 
 Joint01::Joint01()
-:UniaxialMaterial(0,MAT_TAG_Joint01),
- trialStrain(0.0),  trialStrainRate(0.0),
- Epos(0.0), Eneg(0.0), eta(0.0), parameterID(0)
-{
-
+  : UniaxialMaterial(0, MAT_TAG_Joint01), K1ep(0.0), fbyp(0.0), K1pp(0.0), K2ep(0.0), K3ep(0.0), G1p(0.0), G2p(0.0),
+    K1en(0.0), fbyn(0.0), K1pn(0.0), K2en(0.0), K3en(0.0), G1n(0.0), G2n(0.0),
+    Kl(0.0), fsy(0.0), Kse(0.0), Ksp(0.0), Fdp(0.0), Fdn(0.0) {
+    trialStrain = 0.0;
+    trialStrainRate = 0.0;
+    stressBolt = stress1 = stress2 = stress3 = 0.0;
 }
 
 
@@ -136,52 +131,46 @@ Joint01::setTrialStrain(double strain, double strainRate)
 {
     trialStrain     = strain;
     trialStrainRate = strainRate;
+    double v = strain; // 假设v等于应变
+
+    // 计算每种材料的应力
+    stressBolt = calculateStressBolt(v);
+    stress1 = calculateStress1(v);
+    stress2 = calculateStress2(v);
+    stress3 = calculateStress3(v);
     return 0;
 }
 
 
-int 
-Joint01::setTrial(double strain, double &stress, double &tangent, double strainRate)
-{
-    trialStrain     = strain;
-    trialStrainRate = strainRate;
+// int 
+// Joint01::setTrial(double strain, double &stress, double &tangent, double strainRate)
+// {
+//     trialStrain     = strain;
+//     trialStrainRate = strainRate;
 
-    if (trialStrain >= 0.0) {
-        stress = Epos*trialStrain + eta*trialStrainRate;
-        tangent = Epos;
-    } else {
-        stress = Eneg*trialStrain + eta*trialStrainRate;
-        tangent = Eneg;
-    }
+//     if (trialStrain >= 0.0) {
+//         stress = Epos*trialStrain + eta*trialStrainRate;
+//         tangent = Epos;
+//     } else {
+//         stress = Eneg*trialStrain + eta*trialStrainRate;
+//         tangent = Eneg;
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
 
 
 double 
 Joint01::getStress(void)
 {
-    if (trialStrain >= 0.0)
-        return Epos*trialStrain + eta*trialStrainRate;
-    else
-        return Eneg*trialStrain + eta*trialStrainRate;
+  return stressBolt + stress1 + stress2 + stress3;
 }
 
 
 double 
 Joint01::getTangent(void)
 {
-    if (trialStrain >= 0.0)
-        return Epos;
-    else 
-        return Eneg;
-}
-
-
-double 
-Joint01::getInitialTangent(void)
-{
-  return Epos;
+  return 0.0;
 }
 
 
@@ -208,181 +197,197 @@ Joint01::revertToStart(void)
 }
 
 
-UniaxialMaterial *
-Joint01::getCopy(void)
-{
-    Joint01 *theCopy = new Joint01(this->getTag(),Epos,eta,Eneg);
-    theCopy->trialStrain     = trialStrain;
-    theCopy->trialStrainRate = trialStrainRate;
-    theCopy->parameterID = parameterID;
-    return theCopy;
+// UniaxialMaterial *
+// Joint01::getCopy(void)
+// {
+//     Joint01 *theCopy = new Joint01(this->getTag(),Epos,eta,Eneg);
+//     theCopy->trialStrain     = trialStrain;
+//     theCopy->trialStrainRate = trialStrainRate;
+//     theCopy->parameterID = parameterID;
+//     return theCopy;
+// }
+
+UniaxialMaterial *Joint01::getCopy(void) {
+    return new Joint01(this->getTag(), K1ep, fbyp, K1pp, K2ep, K3ep, G1p, G2p,
+                       K1en, fbyn, K1pn, K2en, K3en, G1n, G2n,
+                       Kl, fsy, Kse, Ksp, Fdp, Fdn);
 }
 
+// int 
+// Joint01::sendSelf(int cTag, Channel &theChannel)
+// {
+//   int res = 0;
+//   static Vector data(5);
+//   data(0) = this->getTag();
+//   data(1) = Epos;
+//   data(2) = Eneg;
+//   data(3) = eta;
+//   data(4) = parameterID;
+//   res = theChannel.sendVector(this->getDbTag(), cTag, data);
+//   if (res < 0) 
+//     opserr << "Joint01::sendSelf() - failed to send data" << endln;
 
-int 
-Joint01::sendSelf(int cTag, Channel &theChannel)
-{
-  int res = 0;
-  static Vector data(5);
-  data(0) = this->getTag();
-  data(1) = Epos;
-  data(2) = Eneg;
-  data(3) = eta;
-  data(4) = parameterID;
-  res = theChannel.sendVector(this->getDbTag(), cTag, data);
-  if (res < 0) 
-    opserr << "Joint01::sendSelf() - failed to send data" << endln;
-
-  return res;
-}
+//   return res;
+// }
 
 
-int 
-Joint01::recvSelf(int cTag, Channel &theChannel, 
-			  FEM_ObjectBroker &theBroker)
-{
-  int res = 0;
-  static Vector data(5);
-  res = theChannel.recvVector(this->getDbTag(), cTag, data);
+// int 
+// Joint01::recvSelf(int cTag, Channel &theChannel, 
+// 			  FEM_ObjectBroker &theBroker)
+// {
+//   int res = 0;
+//   static Vector data(5);
+//   res = theChannel.recvVector(this->getDbTag(), cTag, data);
   
-  if (res < 0) {
-    opserr << "Joint01::recvSelf() - failed to receive data" << endln;
-    Epos = Eneg = 0; 
-    this->setTag(0);      
-  }
-  else {
-    this->setTag(int(data(0)));
-    Epos = data(1);
-    Eneg = data(2);
-    eta  = data(3);
-    parameterID = (int)data(4);
-  }
+//   if (res < 0) {
+//     opserr << "Joint01::recvSelf() - failed to receive data" << endln;
+//     Epos = Eneg = 0; 
+//     this->setTag(0);      
+//   }
+//   else {
+//     this->setTag(int(data(0)));
+//     Epos = data(1);
+//     Eneg = data(2);
+//     eta  = data(3);
+//     parameterID = (int)data(4);
+//   }
     
-  return res;
+//   return res;
+// }
+
+int Joint01::sendSelf(int commitTag, Channel &theChannel) {
+    // 发送自身状态
+    return 0;
 }
 
+int Joint01::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker) {
+    // 接收自身状态
+    return 0;
+}
 
-void 
-Joint01::Print(OPS_Stream &s, int flag)
-{
-	if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
-		s << "Joint01 tag: " << this->getTag() << endln;
-		s << "  Epos: " << Epos << " Eneg: " << Eneg << " eta: " << eta << endln;
-	}
+// void 
+// Joint01::Print(OPS_Stream &s, int flag)
+// {
+// 	if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
+// 		s << "Joint01 tag: " << this->getTag() << endln;
+// 		s << "  Epos: " << Epos << " Eneg: " << Eneg << " eta: " << eta << endln;
+// 	}
     
-	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
-		s << "\t\t\t{";
-		s << "\"name\": \"" << this->getTag() << "\", ";
-		s << "\"type\": \"Joint01\", ";
-		s << "\"Epos\": " << Epos << ", ";
-		s << "\"Eneg\": " << Eneg << ", ";
-		s << "\"eta\": " << eta << "}";
-	}
+// 	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
+// 		s << "\t\t\t{";
+// 		s << "\"name\": \"" << this->getTag() << "\", ";
+// 		s << "\"type\": \"Joint01\", ";
+// 		s << "\"Epos\": " << Epos << ", ";
+// 		s << "\"Eneg\": " << Eneg << ", ";
+// 		s << "\"eta\": " << eta << "}";
+// 	}
+// }
+
+
+// int
+// Joint01::setParameter(const char **argv, int argc, Parameter &param)
+// {
+
+//   if (strcmp(argv[0],"E") == 0) {
+//     param.setValue(Epos);
+//     return param.addObject(1, this);
+//   }
+//   if (strcmp(argv[0],"Epos") == 0) {
+//     param.setValue(Epos);
+//     return param.addObject(2, this);
+//   }
+//   if (strcmp(argv[0],"Eneg") == 0) {
+//     param.setValue(Eneg);
+//     return param.addObject(3, this);
+//   }
+//   if (strcmp(argv[0],"eta") == 0) {
+//     param.setValue(eta);
+//     return param.addObject(4, this);
+//   }
+//   return -1;
+// }
+
+
+// int 
+// Joint01::updateParameter(int parameterID, Information &info)
+// {
+//   switch(parameterID) {
+//   case 1:
+//     Epos = info.theDouble;
+//     Eneg = info.theDouble;
+//     return 0;
+//   case 2:
+//     Epos = info.theDouble;
+//     return 0;
+//   case 3:
+//     Eneg = info.theDouble;
+//     return 0;
+//   case 4:
+//     eta = info.theDouble;
+//     return 0;
+//   default:
+//     return -1;
+//   }
+// }
+
+
+// int
+// Joint01::activateParameter(int paramID)
+// {
+//   parameterID = paramID;
+
+//   return 0;
+// }
+
+
+
+
+double Joint01::calculateStressBolt(double v) {
+    double vsy = fsy / (Kse * Kl / (Kse + Kl));
+    if (v < vsy) {
+        return Kse * Kl / (Kse + Kl) * v;
+    } else {
+        return Ksp * (v - vsy) + fsy;
+    }
 }
 
-
-int
-Joint01::setParameter(const char **argv, int argc, Parameter &param)
-{
-
-  if (strcmp(argv[0],"E") == 0) {
-    param.setValue(Epos);
-    return param.addObject(1, this);
-  }
-  if (strcmp(argv[0],"Epos") == 0) {
-    param.setValue(Epos);
-    return param.addObject(2, this);
-  }
-  if (strcmp(argv[0],"Eneg") == 0) {
-    param.setValue(Eneg);
-    return param.addObject(3, this);
-  }
-  if (strcmp(argv[0],"eta") == 0) {
-    param.setValue(eta);
-    return param.addObject(4, this);
-  }
-  return -1;
+double Joint01::calculateStress1(double v) {
+    if (v >= 0) {
+        if (v < G1p) {
+            return 0.0;
+        } else if (v < G2p) {
+            return K1ep * (v - G1p);
+        } else if (v < Fdp) {
+            return K1pp * (v - G2p) + fbyp;
+        } else {
+            return K2ep * (v - Fdp) + 0.8 * Fdp;
+        }
+    } else {
+        if (v > G1n) {
+            return 0.0;
+        } else if (v > G2n) {
+            return K1en * (v - G1n);
+        } else if (v > Fdn) {
+            return K1pn * (v - G2n) + fbyn;
+        } else {
+            return K2en * (v - Fdn) + 0.8 * Fdn;
+        }
+    }
 }
 
-
-int 
-Joint01::updateParameter(int parameterID, Information &info)
-{
-  switch(parameterID) {
-  case 1:
-    Epos = info.theDouble;
-    Eneg = info.theDouble;
-    return 0;
-  case 2:
-    Epos = info.theDouble;
-    return 0;
-  case 3:
-    Eneg = info.theDouble;
-    return 0;
-  case 4:
-    eta = info.theDouble;
-    return 0;
-  default:
-    return -1;
-  }
+double Joint01::calculateStress2(double v) {
+    if (v < G1n) {
+        return 0.0;
+    } else if (v < G2n) {
+        return K1en * (v - G1n);
+    } else if (v < Fdn) {
+        return K1pn * (v - G2n) + fbyn;
+    } else {
+        return K2en * (v - Fdn) + 0.8 * Fdn;
+    }
 }
 
-
-int
-Joint01::activateParameter(int paramID)
-{
-  parameterID = paramID;
-
-  return 0;
-}
-
-
-double
-Joint01::getStressSensitivity(int gradIndex, bool conditional)
-{
-  if (parameterID == 1)
-    return trialStrain;
-  if (parameterID == 2 && trialStrain >= 0.0)
-    return trialStrain;
-  if (parameterID == 3 && trialStrain < 0.0)
-    return trialStrain;
-  if (parameterID == 4)
-    return trialStrainRate;
-
-  return 0.0;
-}
-
-
-double
-Joint01::getTangentSensitivity(int gradIndex)
-{
-  if (parameterID == 1)
-    return 1.0;
-  if (parameterID == 2 && trialStrain >= 0.0)
-    return 1.0;
-  if (parameterID == 3 && trialStrain < 0.0)
-    return 1.0;
-
-  return 0.0;
-}
-
-
-double
-Joint01::getInitialTangentSensitivity(int gradIndex)
-{
-  if (parameterID == 1)
-    return 1.0;
-  if (parameterID == 2)
-    return 1.0;
-
-  return 0.0;
-}
-
-
-int
-Joint01::commitSensitivity(double strainGradient,
-				   int gradIndex, int numGrads)
-{
-  // Nothing to commit ... path independent
-  return 0;
+double Joint01::calculateStress3(double v) {
+    // 类似于calculateStress1和calculateStress2的实现
+    return 0.0;
 }
