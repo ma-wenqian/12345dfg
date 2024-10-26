@@ -18,14 +18,14 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 1.10 $
-// $Date: 2008-08-26 16:30:55 $
+// $Revision: 1.0 $
+// $Date: 2024-10-15 16:30:55 $
 // $Source: /usr/local/cvs/OpenSees/SRC/material/uniaxial/Joint01.cpp,v $
                                                                         
-                                                                        
-// Written: fmk 
-// Created: 07/98
-// Revision: A
+// This file uses support from OpenAI.                                                                        
+// Written: Wenqian Ma
+// Created: 2024-10
+// Revision: 
 //
 // Description: This file contains the class implementation for 
 // Joint01. 
@@ -39,63 +39,53 @@
 #include <Parameter.h>
 #include <string.h>
 
-#include <OPS_Globals.h>
+#include <math.h>
+#include <float.h>
 
+#include <OPS_Globals.h>
 #include <elementAPI.h>
 
-// void *
-// OPS_Joint01(void)
-// {
-//   // Pointer to a uniaxial material that will be returned
-//   UniaxialMaterial *theMaterial = 0;
 
-//   if (OPS_GetNumRemainingInputArgs() < 2) {
-//     opserr << "Invalid #args,  want: uniaxialMaterial Elastic tag? E? <eta?> <Eneg?> ... " << endln;
-//     return 0;
-//   }
-  
-//   int iData[1];
-//   double dData[3];
-//   int numData = 1;
-//   if (OPS_GetIntInput(&numData, iData) != 0) {
-//     opserr << "WARNING invalid tag for uniaxialMaterial Elastic" << endln;
-//     return 0;
-//   }
+void *
+OPS_Joint01(void)
+{
+  // print out some KUDO's 
+  opserr << "Joint01 unaxial material - Written by Wenqian Ma, 2024-10-15" << endln;
+  // Pointer to a uniaxial material that will be returned
+  UniaxialMaterial *theMaterial = 0;
 
-//   numData = OPS_GetNumRemainingInputArgs();
+  int iData[1];
+  double dData[20];
+  int numData = 1;
+  // 这个函数用来读取输入的material tag
+  if (OPS_GetIntInput(&numData, iData) != 0) {
+    opserr << "WARNING invalid tag for uniaxialMaterial Elastic" << endln;
+    return 0;
+  }
 
-//   if (numData >= 3) {
-//     numData = 3;
-//     if (OPS_GetDoubleInput(&numData, dData) != 0) {
-//       opserr << "Invalid data for uniaxial Elastic " << iData[0] << endln;
-//       return 0;	
-//     }
-//   } else if (numData >= 2) {
-//     numData = 2;
-//     if (OPS_GetDoubleInput(&numData, dData) != 0) {
-//       opserr << "Invalid data for uniaxial Elastic " << iData[0] << endln;
-//       return 0;
-//     }
-//     dData[2] = dData[0];
-//   } else {
-//     numData = 1;
-//     if (OPS_GetDoubleInput(&numData, dData) != 0) {
-//       opserr << "Invalid data for uniaxialMaterial Elastic " << iData[0] << endln;
-//       return 0;	
-//     }
-//     dData[1] = 0.0;
-//     dData[2] = dData[0];
-//   }
+  numData = OPS_GetNumRemainingInputArgs();
+  if (numData != 20) {
+    opserr << "Invalid #args,  want: uniaxialMaterial Joint01 tag? Totally 20 parameters are required. K1ep, fbyp, K1pp, K2ep, K3ep, G1p, G2p,\n K1en, fbyn, K1pn, K2en, K3en, G1n, G2n,\n Kl, fsy, Kse, Ksp, Fdp, Fdn " << endln;
+    return 0;
+  }
 
-//   // Parsing was successful, allocate the material
-//   theMaterial = new Joint01(iData[0], dData[0], dData[1], dData[2]);
-//   if (theMaterial == 0) {
-//     opserr << "WARNING could not create uniaxialMaterial of type Joint01" << endln;
-//     return 0;
-//   }
+  // 这个函数用来读取输入的参数
+  if (OPS_GetDoubleInput(&numData, dData) != 0) {
+    opserr << "Invalid #args,  want: uniaxialMaterial Joint01 tag? Totally 20 parameters are required. K1ep, fbyp, K1pp, K2ep, K3ep, G1p, G2p,\n K1en, fbyn, K1pn, K2en, K3en, G1n, G2n,\n Kl, fsy, Kse, Ksp, Fdp, Fdn " << endln;
+    return 0;	
+  }
 
-//   return theMaterial;
-// }
+  // Parsing was successful, allocate the material
+  theMaterial = new Joint01(iData[0], dData[0], dData[1], dData[2],dData[3], dData[4], dData[5], dData[6], dData[7], 
+                                      dData[8], dData[9], dData[10], dData[11], dData[12], dData[13], dData[14], 
+                                      dData[15], dData[16], dData[17], dData[18], dData[19]);
+  if (theMaterial == 0) {
+    opserr << "WARNING could not create uniaxialMaterial of type Joint01" << endln;
+    return 0;
+  }
+  return theMaterial;
+
+}
 
 
 Joint01::Joint01(int tag, double K1ep, double fbyp, double K1pp, double K2ep, double K3ep, double G1p, double G2p,
@@ -107,6 +97,23 @@ Joint01::Joint01(int tag, double K1ep, double fbyp, double K1pp, double K2ep, do
     trialStrain = 0.0;
     trialStrainRate = 0.0;
     stressBolt = stress1 = stress2 = stress3 = 0.0;
+    G3p=G2p; G3n=G2n;
+    Vsy=fsy / (Kse * Kl / (Kse + Kl));
+    V1yp=G2n;
+    V2yp=V1yp+fbyp/K2ep;
+    V3yp=V1yp+fbyp/K3ep;
+    Vdp=V1yp+(Fdp-fbyp)/K1pp;
+    // 我自己额外增加的 为了看参数有没有顺利传递
+   	opserr << "Joint01 tag: " << this->getTag() << endln;
+    opserr << "Input parameters: " << endln;
+    opserr << " K1ep: " << K1ep << " fbyp: " << fbyp << " K1pp: " << K1pp << " K2ep: " << K2ep << " K3ep: " << K3ep << " G1p: " << G1p << " G2p: " << G2p << endln;
+    opserr << " K1en: " << K1en << " fbyn: " << fbyn << " K1pn: " << K1pn << " K2en: " << K2en << " K3en: " << K3en << " G1n: " << G1n << " G2n: " << G2n << endln;
+    opserr << " Kl: " << Kl << " fsy: " << fsy << " Kse: " << Kse << " Ksp: " << Ksp << " Fdp: " << Fdp << " Fdn: " << Fdn << endln;
+    opserr << "Caculated parameters: " << endln;
+    opserr << " Vsy: " << Vsy << endln;
+    opserr << " V1yp: " << V1yp << " V2yp: " << V2yp << " V3yp: " << V3yp << " Vdp: " << Vdp << endln;
+    opserr << " V1yn: " << V1yn << " V2yn: " << V2yn << " V3yn: " << V3yn << " Vdn: " << Vdn << endln;            
+
 }
 
 
@@ -159,6 +166,12 @@ Joint01::setTrialStrain(double strain, double strainRate)
 //     return 0;
 // }
 
+double 
+Joint01::getStrain(void)
+{
+  return trialStrain;
+}
+
 
 double 
 Joint01::getStress(void)
@@ -170,9 +183,14 @@ Joint01::getStress(void)
 double 
 Joint01::getTangent(void)
 {
-  return 0.0;
+  return Kse * Kl / (Kse + Kl);
 }
 
+double 
+Joint01::getInitialTangent(void)
+{
+  return Kse * Kl / (Kse + Kl);
+}
 
 int 
 Joint01::commitState(void)
@@ -197,15 +215,7 @@ Joint01::revertToStart(void)
 }
 
 
-// UniaxialMaterial *
-// Joint01::getCopy(void)
-// {
-//     Joint01 *theCopy = new Joint01(this->getTag(),Epos,eta,Eneg);
-//     theCopy->trialStrain     = trialStrain;
-//     theCopy->trialStrainRate = trialStrainRate;
-//     theCopy->parameterID = parameterID;
-//     return theCopy;
-// }
+
 
 UniaxialMaterial *Joint01::getCopy(void) {
     return new Joint01(this->getTag(), K1ep, fbyp, K1pp, K2ep, K3ep, G1p, G2p,
@@ -265,129 +275,70 @@ int Joint01::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theB
     return 0;
 }
 
-// void 
-// Joint01::Print(OPS_Stream &s, int flag)
-// {
-// 	if (flag == OPS_PRINT_PRINTMODEL_MATERIAL) {
-// 		s << "Joint01 tag: " << this->getTag() << endln;
-// 		s << "  Epos: " << Epos << " Eneg: " << Eneg << " eta: " << eta << endln;
-// 	}
-    
-// 	if (flag == OPS_PRINT_PRINTMODEL_JSON) {
-// 		s << "\t\t\t{";
-// 		s << "\"name\": \"" << this->getTag() << "\", ";
-// 		s << "\"type\": \"Joint01\", ";
-// 		s << "\"Epos\": " << Epos << ", ";
-// 		s << "\"Eneg\": " << Eneg << ", ";
-// 		s << "\"eta\": " << eta << "}";
-// 	}
-// }
+void 
+Joint01::Print(OPS_Stream &s, int flag)
+{
+	s << "Joint01 tag: " << this->getTag() << endln;
+  s << "Input parameters: " << endln;
+  s << " K1ep: " << K1ep << " fbyp: " << fbyp << " K1pp: " << K1pp << " K2ep: " << K2ep << " K3ep: " << K3ep << " G1p: " << G1p << " G2p: " << G2p << endln;
+  s << " K1en: " << K1en << " fbyn: " << fbyn << " K1pn: " << K1pn << " K2en: " << K2en << " K3en: " << K3en << " G1n: " << G1n << " G2n: " << G2n << endln;
+  s << " Kl: " << Kl << " fsy: " << fsy << " Kse: " << Kse << " Ksp: " << Ksp << " Fdp: " << Fdp << " Fdn: " << Fdn << endln;
+  s << "Caculated parameters: " << endln;
+  s << " Vsy:" << Vsy << endln;
+  s << " V1yp:" << V1yp << " V2yp:" << V2yp << " V3yp:" << V3yp << " Vdp:" << Vdp << endln;
+  s << " V1yn:" << V1yn << " V2yn:" << V2yn << " V3yn:" << V3yn << " Vdn:" << Vdn << endln;              
+}
 
-
-// int
-// Joint01::setParameter(const char **argv, int argc, Parameter &param)
-// {
-
-//   if (strcmp(argv[0],"E") == 0) {
-//     param.setValue(Epos);
-//     return param.addObject(1, this);
-//   }
-//   if (strcmp(argv[0],"Epos") == 0) {
-//     param.setValue(Epos);
-//     return param.addObject(2, this);
-//   }
-//   if (strcmp(argv[0],"Eneg") == 0) {
-//     param.setValue(Eneg);
-//     return param.addObject(3, this);
-//   }
-//   if (strcmp(argv[0],"eta") == 0) {
-//     param.setValue(eta);
-//     return param.addObject(4, this);
-//   }
-//   return -1;
-// }
-
-
-// int 
-// Joint01::updateParameter(int parameterID, Information &info)
-// {
-//   switch(parameterID) {
-//   case 1:
-//     Epos = info.theDouble;
-//     Eneg = info.theDouble;
-//     return 0;
-//   case 2:
-//     Epos = info.theDouble;
-//     return 0;
-//   case 3:
-//     Eneg = info.theDouble;
-//     return 0;
-//   case 4:
-//     eta = info.theDouble;
-//     return 0;
-//   default:
-//     return -1;
-//   }
-// }
-
-
-// int
-// Joint01::activateParameter(int paramID)
-// {
-//   parameterID = paramID;
-
-//   return 0;
-// }
 
 
 
 
 double Joint01::calculateStressBolt(double v) {
-    double vsy = fsy / (Kse * Kl / (Kse + Kl));
-    if (v < vsy) {
+    if (v < Vsy) {
         return Kse * Kl / (Kse + Kl) * v;
     } else {
-        return Ksp * (v - vsy) + fsy;
+        return Ksp * (v - Vsy) + fsy;
     }
 }
 
 double Joint01::calculateStress1(double v) {
-    if (v >= 0) {
-        if (v < G1p) {
-            return 0.0;
-        } else if (v < G2p) {
-            return K1ep * (v - G1p);
-        } else if (v < Fdp) {
-            return K1pp * (v - G2p) + fbyp;
-        } else {
-            return K2ep * (v - Fdp) + 0.8 * Fdp;
-        }
-    } else {
-        if (v > G1n) {
-            return 0.0;
-        } else if (v > G2n) {
-            return K1en * (v - G1n);
-        } else if (v > Fdn) {
-            return K1pn * (v - G2n) + fbyn;
-        } else {
-            return K2en * (v - Fdn) + 0.8 * Fdn;
-        }
-    }
+    return 0.0;
+    // if (v >= 0) {
+    //     if (v < G1p) {
+    //         return 0.0;
+    //     } else if (v < G2p) {
+    //         return K1ep * (v - G1p);
+    //     } else if (v < Fdp) {
+    //         return K1pp * (v - G2p) + fbyp;
+    //     } else {
+    //         return K2ep * (v - Fdp) + 0.8 * Fdp;
+    //     }
+    // } else {
+    //     if (v > G1n) {
+    //         return 0.0;
+    //     } else if (v > G2n) {
+    //         return K1en * (v - G1n);
+    //     } else if (v > Fdn) {
+    //         return K1pn * (v - G2n) + fbyn;
+    //     } else {
+    //         return K2en * (v - Fdn) + 0.8 * Fdn;
+    //     }
+    // }
 }
 
 double Joint01::calculateStress2(double v) {
-    if (v < G1n) {
-        return 0.0;
-    } else if (v < G2n) {
-        return K1en * (v - G1n);
-    } else if (v < Fdn) {
-        return K1pn * (v - G2n) + fbyn;
-    } else {
-        return K2en * (v - Fdn) + 0.8 * Fdn;
-    }
+    return 0.0;
+    // if (v < G1n) {
+    //     return 0.0;
+    // } else if (v < G2n) {
+    //     return K1en * (v - G1n);
+    // } else if (v < Fdn) {
+    //     return K1pn * (v - G2n) + fbyn;
+    // } else {
+    //     return K2en * (v - Fdn) + 0.8 * Fdn;
+    // }
 }
 
 double Joint01::calculateStress3(double v) {
-    // 类似于calculateStress1和calculateStress2的实现
-    return 0.0;
+    return 0;
 }

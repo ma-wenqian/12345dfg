@@ -18,17 +18,20 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 1.7 $
+// $Revision: 1.0 $
 // $Date: 2024-10-15 16:30:55 $
 // $Source: /usr/local/cvs/OpenSees/SRC/material/uniaxial/Joint01.h,v $
+
                                                                         
                                                                         
 #ifndef Joint01_h
 #define Joint01_h
 
+// This file uses support from OpenAI.
 // Written: Wenqian Ma
 // Created: 2024-10
 // Revision: 
+
 //
 // Description: This file contains the class definition for 
 // Joint01. Joint01 provides the abstraction
@@ -56,8 +59,12 @@ class Joint01 : public UniaxialMaterial
     const char *getClassType(void) const {return "Joint01";}
 
     int setTrialStrain(double strain, double strainRate = 0.0); 
+    double getStrain(void);
     double getStress(void);
     double getTangent(void);
+
+    double getInitialTangent(void);
+
     int commitState(void);
     int revertToLastCommit(void);    
     int revertToStart(void);        
@@ -67,6 +74,8 @@ class Joint01 : public UniaxialMaterial
     int sendSelf(int commitTag, Channel &theChannel);  
     int recvSelf(int commitTag, Channel &theChannel, 
         FEM_ObjectBroker &theBroker);
+    
+    void Print(OPS_Stream &s, int flag =0);
 
     
   private:
@@ -77,9 +86,10 @@ class Joint01 : public UniaxialMaterial
     double trialStrain;
     double trialStrainRate;
     // cālculated values
+    double G3p, G3n;
     double Vsy;
-    double fbyp, V1yp, V2yp, V3yp, Vdp;
-    double fbyn, V1yn, V2yn, V3yn, Vdn;
+    double V1yp, V2yp, V3yp, Vdp;
+    double V1yn, V2yn, V3yn, Vdn;
     double stressBolt, stress1, stress2, stress3;
     // 应力计算方法
     double calculateStressBolt(double v);
