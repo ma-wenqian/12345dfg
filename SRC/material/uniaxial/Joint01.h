@@ -85,17 +85,18 @@ class Joint01 : public UniaxialMaterial
     double Kl, fsy, Kse, Ksp, Fdp, Fdn;
     double trialStrain;
     double trialStrainRate;
+    double trialTangent;
+    double trialStress;
     // cālculated values
     double G3p, G3n;
     double Vsy;
     double V1yp, V2yp, V3yp, Vdp;
     double V1yn, V2yn, V3yn, Vdn;
-    double stressBolt, stress1, stress2, stress3;
     // 应力计算方法
-    double calculateStressBolt(double v);
-    double calculateStress1(double v);
-    double calculateStress2(double v);
-    double calculateStress3(double v);
+    void calculate_Bolt(double* trialStress, double* trialTangent);
+    void calculate_Glubam1(double* trialStress, double* trialTangent);
+    void calculate_Glubam2(double* trialStress, double* trialTangent);
+    void calculate_Glubam3(double* trialStress, double* trialTangent);
 };
 
 

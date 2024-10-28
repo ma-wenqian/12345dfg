@@ -96,13 +96,16 @@ Joint01::Joint01(int tag, double K1ep, double fbyp, double K1pp, double K2ep, do
     Kl(Kl), fsy(fsy), Kse(Kse), Ksp(Ksp), Fdp(Fdp), Fdn(Fdn) {
     trialStrain = 0.0;
     trialStrainRate = 0.0;
-    stressBolt = stress1 = stress2 = stress3 = 0.0;
     G3p=G2p; G3n=G2n;
     Vsy=fsy / (Kse * Kl / (Kse + Kl));
     V1yp=G2n;
     V2yp=V1yp+fbyp/K2ep;
     V3yp=V1yp+fbyp/K3ep;
     Vdp=V1yp+(Fdp-fbyp)/K1pp;
+    V1yn=-G2n;
+    V2yn=V1yn-fbyn/K2en;
+    V3yn=V1yn-fbyn/K3en;
+    Vdn=V1yn-(Fdn-fbyn)/K1pn;
     // 我自己额外增加的 为了看参数有没有顺利传递
    	opserr << "Joint01 tag: " << this->getTag() << endln;
     opserr << "Input parameters: " << endln;
@@ -123,7 +126,6 @@ Joint01::Joint01()
     Kl(0.0), fsy(0.0), Kse(0.0), Ksp(0.0), Fdp(0.0), Fdn(0.0) {
     trialStrain = 0.0;
     trialStrainRate = 0.0;
-    stressBolt = stress1 = stress2 = stress3 = 0.0;
 }
 
 
@@ -132,90 +134,57 @@ Joint01::~Joint01()
   // does nothing
 }
 
-
-int 
-Joint01::setTrialStrain(double strain, double strainRate)
+int Joint01::setTrialStrain(double strain, double strainRate)
 {
-    trialStrain     = strain;
-    trialStrainRate = strainRate;
-    double v = strain; // 假设v等于应变
+  trialStrain = strain;
+  trialStrainRate = strainRate;
 
-    // 计算每种材料的应力
-    stressBolt = calculateStressBolt(v);
-    stress1 = calculateStress1(v);
-    stress2 = calculateStress2(v);
-    stress3 = calculateStress3(v);
-    return 0;
+  // 计算每种材料的应力
+  trialStress = 0.0;
+  trialTangent = 0.0;
+  calculate_Bolt(&trialStress, &trialTangent);
+  calculate_Glubam1(&trialStress, &trialTangent);
+  calculate_Glubam2(&trialStress, &trialTangent);
+  calculate_Glubam3(&trialStress, &trialTangent);
+  return 0;
 }
 
-
-// int 
-// Joint01::setTrial(double strain, double &stress, double &tangent, double strainRate)
-// {
-//     trialStrain     = strain;
-//     trialStrainRate = strainRate;
-
-//     if (trialStrain >= 0.0) {
-//         stress = Epos*trialStrain + eta*trialStrainRate;
-//         tangent = Epos;
-//     } else {
-//         stress = Eneg*trialStrain + eta*trialStrainRate;
-//         tangent = Eneg;
-//     }
-
-//     return 0;
-// }
-
-double 
-Joint01::getStrain(void)
+double Joint01::getStrain(void)
 {
   return trialStrain;
 }
 
-
-double 
-Joint01::getStress(void)
+double Joint01::getStress(void)
 {
-  return stressBolt + stress1 + stress2 + stress3;
+  return trialStress;
 }
 
-
-double 
-Joint01::getTangent(void)
+double Joint01::getTangent(void)
 {
-  return Kse * Kl / (Kse + Kl);
+  return trialTangent;
 }
 
-double 
-Joint01::getInitialTangent(void)
+double Joint01::getInitialTangent(void)
 {
   return Kse * Kl / (Kse + Kl);
 }
 
-int 
-Joint01::commitState(void)
+int Joint01::commitState(void)
 {
   return 0;
 }
 
-
-int 
-Joint01::revertToLastCommit(void)
+int Joint01::revertToLastCommit(void)
 {
   return 0;
 }
 
-
-int 
-Joint01::revertToStart(void)
+int Joint01::revertToStart(void)
 {
-    trialStrain      = 0.0;
-    trialStrainRate  = 0.0;
-    return 0;
+  trialStrain = 0.0;
+  trialStrainRate = 0.0;
+  return 0;
 }
-
-
-
 
 UniaxialMaterial *Joint01::getCopy(void) {
     return new Joint01(this->getTag(), K1ep, fbyp, K1pp, K2ep, K3ep, G1p, G2p,
@@ -275,10 +244,9 @@ int Joint01::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theB
     return 0;
 }
 
-void 
-Joint01::Print(OPS_Stream &s, int flag)
+void Joint01::Print(OPS_Stream &s, int flag)
 {
-	s << "Joint01 tag: " << this->getTag() << endln;
+  s << "Joint01 tag: " << this->getTag() << endln;
   s << "Input parameters: " << endln;
   s << " K1ep: " << K1ep << " fbyp: " << fbyp << " K1pp: " << K1pp << " K2ep: " << K2ep << " K3ep: " << K3ep << " G1p: " << G1p << " G2p: " << G2p << endln;
   s << " K1en: " << K1en << " fbyn: " << fbyn << " K1pn: " << K1pn << " K2en: " << K2en << " K3en: " << K3en << " G1n: " << G1n << " G2n: " << G2n << endln;
@@ -286,59 +254,129 @@ Joint01::Print(OPS_Stream &s, int flag)
   s << "Caculated parameters: " << endln;
   s << " Vsy:" << Vsy << endln;
   s << " V1yp:" << V1yp << " V2yp:" << V2yp << " V3yp:" << V3yp << " Vdp:" << Vdp << endln;
-  s << " V1yn:" << V1yn << " V2yn:" << V2yn << " V3yn:" << V3yn << " Vdn:" << Vdn << endln;              
+  s << " V1yn:" << V1yn << " V2yn:" << V2yn << " V3yn:" << V3yn << " Vdn:" << Vdn << endln;
 }
 
-
-
-
-
-double Joint01::calculateStressBolt(double v) {
-    if (v < Vsy) {
-        return Kse * Kl / (Kse + Kl) * v;
-    } else {
-        return Ksp * (v - Vsy) + fsy;
-    }
+void Joint01::calculate_Bolt(double *trialStress, double *trialTangent)
+{
+  double v = trialStrain;
+  if (v < -Vsy)
+  {
+    *trialStress += Ksp * (v + Vsy) - fsy;
+    *trialTangent += Ksp;
+  }
+  else if (v < Vsy)
+  {
+    *trialStress += Kse * Kl / (Kse + Kl) * v;
+    *trialTangent += Kse * Kl / (Kse + Kl);
+  }
+  else
+  {
+    *trialStress += Ksp * (v - Vsy) + fsy;
+    *trialTangent += Ksp;
+  }
 }
 
-double Joint01::calculateStress1(double v) {
-    return 0.0;
-    // if (v >= 0) {
-    //     if (v < G1p) {
-    //         return 0.0;
-    //     } else if (v < G2p) {
-    //         return K1ep * (v - G1p);
-    //     } else if (v < Fdp) {
-    //         return K1pp * (v - G2p) + fbyp;
-    //     } else {
-    //         return K2ep * (v - Fdp) + 0.8 * Fdp;
-    //     }
-    // } else {
-    //     if (v > G1n) {
-    //         return 0.0;
-    //     } else if (v > G2n) {
-    //         return K1en * (v - G1n);
-    //     } else if (v > Fdn) {
-    //         return K1pn * (v - G2n) + fbyn;
-    //     } else {
-    //         return K2en * (v - Fdn) + 0.8 * Fdn;
-    //     }
-    // }
+void Joint01::calculate_Glubam1(double *trialStress, double *trialTangent)
+{
+  double v = trialStrain;
+
+  if (v < Vdn)
+  {
+    *trialStress += -0.8 * Fdn;
+    *trialTangent += 0.0;
+  }
+  else if (v < V1yn)
+  {
+    *trialStress += K1pn * (v - V1yn) - fbyn;
+    *trialTangent += K1pn;
+  }
+
+  else if (v < -G1n)
+  {
+    *trialStress += K1en * (v + G1n);
+    *trialTangent += K1en;
+  }
+  else if (v < G1p)
+  {
+    *trialStress += 0.0;
+    *trialTangent += 0.0;
+  }
+  else if (v < V1yp)
+  {
+    *trialStress += K1ep * (v - V1yp);
+    *trialTangent += K1ep;
+  }
+  else if (v < Vdp)
+  {
+    *trialStress += K1pp * (v - G2p) + fbyp;
+    *trialTangent += K1pp;
+  }
+  else
+  {
+    *trialStress += 0.8 * Fdp;
+    *trialTangent += 0.0;
+  }
 }
 
-double Joint01::calculateStress2(double v) {
-    return 0.0;
-    // if (v < G1n) {
-    //     return 0.0;
-    // } else if (v < G2n) {
-    //     return K1en * (v - G1n);
-    // } else if (v < Fdn) {
-    //     return K1pn * (v - G2n) + fbyn;
-    // } else {
-    //     return K2en * (v - Fdn) + 0.8 * Fdn;
-    // }
+void Joint01::calculate_Glubam2(double *trialStress, double *trialTangent)
+{
+  double v = trialStrain;
+
+  if (v < V2yn)
+  {
+    *trialStress += -fbyn;
+    *trialTangent += 0.0;
+  }
+  else if (v < V1yn)
+  {
+    *trialStress += K2en * (v - V1yn);
+    *trialTangent += K2en;
+  }
+  else if (v < V1yp)
+  {
+    *trialStress += 0.0;
+    *trialTangent += 0.0;
+  }
+  else if (v < V2yp)
+  {
+    *trialStress += K2ep * (v - V1yp);
+    *trialTangent += K2ep;
+  }
+  else
+  {
+    *trialStress += fbyp;
+    *trialTangent += 0.0;
+  }
 }
 
-double Joint01::calculateStress3(double v) {
-    return 0;
+void Joint01::calculate_Glubam3(double *trialStress, double *trialTangent)
+{
+  double v = trialStrain;
+
+  if (v < V3yn)
+  {
+    *trialStress += -fbyn;
+    *trialTangent += 0.0;
+  }
+  else if (v < V1yn)
+  {
+    *trialStress += K3en * (v - V1yn);
+    *trialTangent += K3en;
+  }
+  else if (v < V1yp)
+  {
+    *trialStress += 0.0;
+    *trialTangent += 0.0;
+  }
+  else if (v < V3yp)
+  {
+    *trialStress += K3ep * (v - V1yp);
+    *trialTangent += K3ep;
+  }
+  else
+  {
+    *trialStress += fbyp;
+    *trialTangent += 0.0;
+  }
 }
