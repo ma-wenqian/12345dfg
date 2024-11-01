@@ -27,7 +27,7 @@
 #ifndef Joint01_h
 #define Joint01_h
 
-// This file uses support from OpenAI.
+
 // Written: Wenqian Ma
 // Created: 2024-10
 // Revision: 
@@ -79,6 +79,7 @@ class Joint01 : public UniaxialMaterial
 
     
   private:
+    /*** Material Properties ***/
     // 20 input parameters
     double K1ep, fbyp, K1pp, K2ep, K3ep, G1p, G2p;
     double K1en, fbyn, K1pn, K2en, K3en, G1n, G2n;
@@ -92,11 +93,38 @@ class Joint01 : public UniaxialMaterial
     double Vsy;
     double V1yp, V2yp, V3yp, Vdp;
     double V1yn, V2yn, V3yn, Vdn;
+
+    /*** CONVERGED State Variables ***/    
+    double Cstrain;
+    double Cstress;
+    double Cstress_Bolt, Cstress_Glubam1p, Cstress_Glubam1n, Cstress_Glubam2p, Cstress_Glubam2n, Cstress_Glubam3p, Cstress_Glubam3n;
+    double Ctangent;   
+
+    /*** TRIAL State Variables ***/
+    double Tstrain;
+    double Tstress;
+    double Tstress_Bolt, Tstress_Glubam1p, Tstress_Glubam1n, Tstress_Glubam2p, Tstress_Glubam2n,Tstress_Glubam3p, Tstress_Glubam3n;
+    double Ttangent; // Not really a state variable, but declared here
+                     // for convenience 
+
+    /*** Glubam1 ***/
+    double minElasticYieldStrain1p, maxElasticYieldStrain1p;
+    double minElasticYieldStrain1n, maxElasticYieldStrain1n;
+    
+    /*** Glubam2 ***/
+    double minElasticYieldStrain2p, maxElasticYieldStrain2p;
+    double minElasticYieldStrain2n, maxElasticYieldStrain2n;
+
+    /*** Glubam3 ***/
+    double minElasticYieldStrain3p, maxElasticYieldStrain3p;
+    double minElasticYieldStrain3n, maxElasticYieldStrain3n;
+
     // 应力计算方法
-    void calculate_Bolt(double* trialStress, double* trialTangent);
-    void calculate_Glubam1(double* trialStress, double* trialTangent);
-    void calculate_Glubam2(double* trialStress, double* trialTangent);
-    void calculate_Glubam3(double* trialStress, double* trialTangent);
+    void calculate_Bolt(double dStrain, double *Tstress_Bolt, double * Cstress_Bolt, double* trialTangent);
+    void calculate_Glubam(double *Tstrain, double *Tstress_Glubam, double *trialTangent,
+                          double *minElasticYieldStrain, double *maxElasticYieldStrain, double fy, double E, double gap,
+                          double eta_E = 0, double *Vdrop = nullptr);
+  
 };
 
 
