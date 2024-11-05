@@ -89,6 +89,7 @@ class Joint01 : public UniaxialMaterial
     double trialTangent;
     double trialStress;
     // cālculated values
+    double K; // initial tangent for the Bolt material
     double G3p, G3n;
     double Vsy;
     double V1yp, V2yp, V3yp, Vdp;

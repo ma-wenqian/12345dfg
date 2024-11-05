@@ -220,6 +220,7 @@ int Joint01::revertToStart(void)
   // caculate the variables
   trialStrain = 0.0;
   trialStrainRate = 0.0;
+  K = Kse * Kl / (Kse + Kl);
   G3p = G2p;
   G3n = G2n;
   Vsy = fsy / (Kse * Kl / (Kse + Kl));
@@ -291,56 +292,20 @@ UniaxialMaterial *Joint01::getCopy(void) {
                        Kl, fsy, Kse, Ksp, Fdp, Fdn);
 }
 
-// int 
-// Joint01::sendSelf(int cTag, Channel &theChannel)
-// {
-//   int res = 0;
-//   static Vector data(5);
-//   data(0) = this->getTag();
-//   data(1) = Epos;
-//   data(2) = Eneg;
-//   data(3) = eta;
-//   data(4) = parameterID;
-//   res = theChannel.sendVector(this->getDbTag(), cTag, data);
-//   if (res < 0) 
-//     opserr << "Joint01::sendSelf() - failed to send data" << endln;
-
-//   return res;
-// }
-
-
-// int 
-// Joint01::recvSelf(int cTag, Channel &theChannel, 
-// 			  FEM_ObjectBroker &theBroker)
-// {
-//   int res = 0;
-//   static Vector data(5);
-//   res = theChannel.recvVector(this->getDbTag(), cTag, data);
-  
-//   if (res < 0) {
-//     opserr << "Joint01::recvSelf() - failed to receive data" << endln;
-//     Epos = Eneg = 0; 
-//     this->setTag(0);      
-//   }
-//   else {
-//     this->setTag(int(data(0)));
-//     Epos = data(1);
-//     Eneg = data(2);
-//     eta  = data(3);
-//     parameterID = (int)data(4);
-//   }
-    
-//   return res;
-// }
+// There are two methods provided which are required is the user uses to use the database or parallel
+// procesing features of the OpenSees applications. If neither are to be used, the developer need simply
+// return a negative value in both methods. The idea is that the material must pack up it's information
+// using Vector and ID objects and send it off to a Channel object. On the flip side, the receiving
+// blank element must receive the same Vector and ID data, unpack it and set the variables.
 
 int Joint01::sendSelf(int commitTag, Channel &theChannel) {
     // 发送自身状态
-    return 0;
+    return -1;
 }
 
 int Joint01::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker) {
     // 接收自身状态
-    return 0;
+    return -1;
 }
 
 void Joint01::Print(OPS_Stream &s, int flag)
@@ -358,10 +323,19 @@ void Joint01::Print(OPS_Stream &s, int flag)
 
 void Joint01::calculate_Bolt(double dStrain, double *Tstress_Bolt, double *Cstress_Bolt, double *trialTangent)
 {
+  if (fabs(Tstrain) > Vsy)
+  {
+    K = Kse;
+  }
   // hardenring type : kinematic hardening
-  double Y1 = Ksp * Tstrain + fsy * (1.0 - Ksp / (Kse * Kl / (Kse + Kl)));
-  double Y2 = *Cstress_Bolt + Kse * Kl / (Kse + Kl) * dStrain;
-  double Y3 = Ksp * Tstrain - fsy * (1.0 - Ksp / (Kse * Kl / (Kse + Kl)));
+  // double Y1 = Ksp * Tstrain + fsy * (1.0 - Ksp / (Kse * Kl / (Kse + Kl)));
+  // double Y2 = *Cstress_Bolt + Kse * Kl / (Kse + Kl) * dStrain;
+  // double Y3 = Ksp * Tstrain - fsy * (1.0 - Ksp / (Kse * Kl / (Kse + Kl)));
+
+  double Y1 = Ksp * Tstrain + fsy - Ksp * Vsy;
+  double Y2 = *Cstress_Bolt + K * dStrain;
+  double Y3 = Ksp * Tstrain - (fsy - Ksp * Vsy);
+
 
   *Tstress_Bolt = std::max(Y3, std::min(Y1, Y2));
 
@@ -400,7 +374,8 @@ void Joint01::calculate_Glubam(double *Tstrain, double *Tstress_Glubam, double *
       *Tstress_Glubam = 0.8 * fy;
       *trialTangent += 0;
       *maxElasticYieldStrain = DBL_MAX;
-      *minElasticYieldStrain = DBL_MAX;
+      *minElasticYieldStrain = DBL_MAX; // 脆性破坏 brittle failure.
+      // *minElasticYieldStrain = trialStrain - *Tstress_Glubam / E; // 塑性破坏 plastic failure.
       *Vdrop = trialStrain;
       return; // 提前退出函数
     }
