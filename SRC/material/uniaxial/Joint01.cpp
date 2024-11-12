@@ -53,7 +53,7 @@ void *
 OPS_Joint01(void)
 {
   // print out some KUDO's
-  opserr << "Joint01 unaxial material - Written by Wenqian Ma, 2024-10-15" << endln;
+  // opserr << "Joint01 unaxial material - Written by Wenqian Ma, 2024-10-15 - Version 1.1" << endln;
   // Pointer to a uniaxial material that will be returned
   UniaxialMaterial *theMaterial = 0;
 
@@ -274,15 +274,15 @@ int Joint01::revertToStart(void)
   maxElasticYieldStrain3n = V3yn;
 
   // 我自己额外增加的 为了看参数有没有顺利传递
-  opserr << "Joint01 tag: " << this->getTag() << endln;
-  opserr << "Input parameters: " << endln;
-  opserr << " K1ep: " << K1ep << " fbyp: " << fbyp << " K1pp: " << K1pp << " K2ep: " << K2ep << " K3ep: " << K3ep << " G1p: " << G1p << " G2p: " << G2p << endln;
-  opserr << " K1en: " << K1en << " fbyn: " << fbyn << " K1pn: " << K1pn << " K2en: " << K2en << " K3en: " << K3en << " G1n: " << G1n << " G2n: " << G2n << endln;
-  opserr << " Kl: " << Kl << " fsy: " << fsy << " Kse: " << Kse << " Ksp: " << Ksp << " Fdp: " << Fdp << " Fdn: " << Fdn << endln;
-  opserr << "Caculated parameters: " << endln;
-  opserr << " Vsy: " << Vsy << endln;
-  opserr << " V1yp: " << V1yp << " V2yp: " << V2yp << " V3yp: " << V3yp << " Vdp: " << Vdp << endln;
-  opserr << " V1yn: " << V1yn << " V2yn: " << V2yn << " V3yn: " << V3yn << " Vdn: " << Vdn << endln;
+  // opserr << "Joint01 tag: " << this->getTag() << endln;
+  // opserr << "Input parameters: " << endln;
+  // opserr << " K1ep: " << K1ep << " fbyp: " << fbyp << " K1pp: " << K1pp << " K2ep: " << K2ep << " K3ep: " << K3ep << " G1p: " << G1p << " G2p: " << G2p << endln;
+  // opserr << " K1en: " << K1en << " fbyn: " << fbyn << " K1pn: " << K1pn << " K2en: " << K2en << " K3en: " << K3en << " G1n: " << G1n << " G2n: " << G2n << endln;
+  // opserr << " Kl: " << Kl << " fsy: " << fsy << " Kse: " << Kse << " Ksp: " << Ksp << " Fdp: " << Fdp << " Fdn: " << Fdn << endln;
+  // opserr << "Caculated parameters: " << endln;
+  // opserr << " Vsy: " << Vsy << endln;
+  // opserr << " V1yp: " << V1yp << " V2yp: " << V2yp << " V3yp: " << V3yp << " Vdp: " << Vdp << endln;
+  // opserr << " V1yn: " << V1yn << " V2yn: " << V2yn << " V3yn: " << V3yn << " Vdn: " << Vdn << endln;
   return 0;
 }
 
