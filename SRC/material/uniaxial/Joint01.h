@@ -18,8 +18,8 @@
 **                                                                    **
 ** ****************************************************************** */
                                                                         
-// $Revision: 1.0 $
-// $Date: 2024-10-15 16:30:55 $
+// $Revision: 1.2 $
+// $Date: 2024-11-22 16:30:55 $
 // $Source: /usr/local/cvs/OpenSees/SRC/material/uniaxial/Joint01.h,v $
 
                                                                         
@@ -85,7 +85,6 @@ class Joint01 : public UniaxialMaterial
     double K1en, fbyn, K1pn, K2en, K3en, G1n, G2n;
     double Kl, fsy, Kse, Ksp, Fdp, Fdn;
     double trialStrain;
-    double trialStrainRate;
     double trialTangent;
     double trialStress;
     // cālculated values
@@ -94,6 +93,9 @@ class Joint01 : public UniaxialMaterial
     double Vsy;
     double V1yp, V2yp, V3yp, Vdp;
     double V1yn, V2yn, V3yn, Vdn;
+
+    double dStrain;
+    double V_verylarge;
 
     /*** CONVERGED State Variables ***/    
     double Cstrain;

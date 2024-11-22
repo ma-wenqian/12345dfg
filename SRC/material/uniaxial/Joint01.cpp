@@ -17,23 +17,21 @@
 **   Filip C. Filippou (filippou@ce.berkeley.edu)                     **
 **                                                                    **
 ** ****************************************************************** */
-                                                                        
-// $Revision: 1.0 $
-// $Date: 2024-10-15 16:30:55 $
+
+// $Revision: 1.2 $
+// $Date: 2024-11-22 16:30:55 $
 // $Source: /usr/local/cvs/OpenSees/SRC/material/uniaxial/Joint01.cpp,v $
-                                                                        
-                                                                      
+
 // Written: Wenqian Ma
 // Created: 2024-10
-// Revision: 
+// Revision:
 //
-// Description: This file contains the class implementation for 
-// Joint01. 
+// Description: This file contains the class implementation for
+// Joint01.
 //
 // What: "@(#) Joint01.C, revA"
 
-
-// #define dbl_Epsilon 2.22e-16	 // a very small double 
+// #define dbl_Epsilon 2.22e-16	 // a very small double
 // already defined this project in other material files
 
 #include <Joint01.h>
@@ -119,8 +117,6 @@ Joint01::~Joint01()
 int Joint01::setTrialStrain(double strain, double strainRate)
 {
 
-  trialStrainRate = strainRate;
-
   // 计算每种材料的应力
   trialStress = 0.0;
   trialTangent = 0.0;
@@ -137,7 +133,7 @@ int Joint01::setTrialStrain(double strain, double strainRate)
   Tstress_Glubam3n = Cstress_Glubam3n;
 
   // Determine change in strain from last converged state
-  double dStrain = strain - Cstrain;
+  dStrain = strain - Cstrain;
   // opserr <<"strain: "<< strain << "\tCstrain: " << Cstrain << "\tdStrain: " << dStrain << endln;
 
   if (fabs(dStrain) > DBL_EPSILON)
@@ -151,15 +147,15 @@ int Joint01::setTrialStrain(double strain, double strainRate)
     calculate_Glubam(&Tstrain, &Tstress_Glubam1n, &trialTangent,
                      &minElasticYieldStrain1n, &maxElasticYieldStrain1n, -fbyn, K1en, -G1n, K1pn, &Vdn);
     calculate_Glubam(&Tstrain, &Tstress_Glubam2p, &trialTangent,
-                     &minElasticYieldStrain2p, &maxElasticYieldStrain2p, fbyp, K2ep, G2p);
+                     &minElasticYieldStrain2p, &maxElasticYieldStrain2p, fbyp, K2ep, G2p, 0, &V_verylarge);
     calculate_Glubam(&Tstrain, &Tstress_Glubam2n, &trialTangent,
-                     &minElasticYieldStrain2n, &maxElasticYieldStrain2n, -fbyn, K2en, -G2n);
+                     &minElasticYieldStrain2n, &maxElasticYieldStrain2n, -fbyn, K2en, -G2n, 0, &V_verylarge);
     calculate_Glubam(&Tstrain, &Tstress_Glubam3p, &trialTangent,
-                     &minElasticYieldStrain3p, &maxElasticYieldStrain3p, fbyp, K3ep, G3p);
+                     &minElasticYieldStrain3p, &maxElasticYieldStrain3p, fbyp, K3ep, G3p, 0, &V_verylarge);
     calculate_Glubam(&Tstrain, &Tstress_Glubam3n, &trialTangent,
-                       &minElasticYieldStrain3n, &maxElasticYieldStrain3n, -fbyn, K3en, -G3n);
+                     &minElasticYieldStrain3n, &maxElasticYieldStrain3n, -fbyn, K3en, -G3n, 0, &V_verylarge);
 
-    Tstress = Tstress_Bolt + Tstress_Glubam1p+ Tstress_Glubam1n + Tstress_Glubam2p + Tstress_Glubam2n + Tstress_Glubam3p + Tstress_Glubam3n;
+    Tstress = Tstress_Bolt + Tstress_Glubam1p + Tstress_Glubam1n + Tstress_Glubam2p + Tstress_Glubam2n + Tstress_Glubam3p + Tstress_Glubam3n;
   }
   return 0;
 }
@@ -219,12 +215,11 @@ int Joint01::revertToStart(void)
 {
   // caculate the variables
   trialStrain = 0.0;
-  trialStrainRate = 0.0;
   K = Kse * Kl / (Kse + Kl);
   G3p = G2p;
   G3n = G2n;
   Vsy = fsy / (Kse * Kl / (Kse + Kl));
-  V1yp = G1p+fbyp/K1ep;
+  V1yp = G1p + fbyp / K1ep;
   V2yp = G2p + fbyp / K2ep;
   V3yp = G3p + fbyp / K3ep;
   Vdp = V1yp + (Fdp - fbyp) / K1pp;
@@ -232,6 +227,8 @@ int Joint01::revertToStart(void)
   V2yn = -G2n - fbyn / K2en;
   V3yn = -G3n - fbyn / K3en;
   Vdn = V1yn - (Fdn - fbyn) / K1pn;
+
+  V_verylarge = DBL_MAX;
 
   // Sets all history and state variables to initial values
   // History variables
@@ -260,17 +257,17 @@ int Joint01::revertToStart(void)
   // set initial values for the glumbam variables
   minElasticYieldStrain1p = G1p;
   maxElasticYieldStrain1p = V1yp;
-  minElasticYieldStrain1n = -G1n; // G1n is positive, here should be a negative number  
+  minElasticYieldStrain1n = -G1n; // G1n is positive, here should be a negative number
   maxElasticYieldStrain1n = V1yn;
 
   minElasticYieldStrain2p = G2p;
   maxElasticYieldStrain2p = V2yp;
-  minElasticYieldStrain2n = -G2n; // G2n is positive, here should be a negative number  
+  minElasticYieldStrain2n = -G2n; // G2n is positive, here should be a negative number
   maxElasticYieldStrain2n = V2yn;
 
   minElasticYieldStrain3p = G3p;
   maxElasticYieldStrain3p = V3yp;
-  minElasticYieldStrain3n = -G3n; // G3n is positive, here should be a negative number  
+  minElasticYieldStrain3n = -G3n; // G3n is positive, here should be a negative number
   maxElasticYieldStrain3n = V3yn;
 
   // 我自己额外增加的 为了看参数有没有顺利传递
@@ -286,10 +283,11 @@ int Joint01::revertToStart(void)
   return 0;
 }
 
-UniaxialMaterial *Joint01::getCopy(void) {
-    return new Joint01(this->getTag(), K1ep, fbyp, K1pp, K2ep, K3ep, G1p, G2p,
-                       K1en, fbyn, K1pn, K2en, K3en, G1n, G2n,
-                       Kl, fsy, Kse, Ksp, Fdp, Fdn);
+UniaxialMaterial *Joint01::getCopy(void)
+{
+  return new Joint01(this->getTag(), K1ep, fbyp, K1pp, K2ep, K3ep, G1p, G2p,
+                     K1en, fbyn, K1pn, K2en, K3en, G1n, G2n,
+                     Kl, fsy, Kse, Ksp, Fdp, Fdn);
 }
 
 // There are two methods provided which are required is the user uses to use the database or parallel
@@ -298,14 +296,16 @@ UniaxialMaterial *Joint01::getCopy(void) {
 // using Vector and ID objects and send it off to a Channel object. On the flip side, the receiving
 // blank element must receive the same Vector and ID data, unpack it and set the variables.
 
-int Joint01::sendSelf(int commitTag, Channel &theChannel) {
-    // 发送自身状态
-    return -1;
+int Joint01::sendSelf(int commitTag, Channel &theChannel)
+{
+  // 发送自身状态
+  return -1;
 }
 
-int Joint01::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker) {
-    // 接收自身状态
-    return -1;
+int Joint01::recvSelf(int commitTag, Channel &theChannel, FEM_ObjectBroker &theBroker)
+{
+  // 接收自身状态
+  return -1;
 }
 
 void Joint01::Print(OPS_Stream &s, int flag)
@@ -336,7 +336,6 @@ void Joint01::calculate_Bolt(double dStrain, double *Tstress_Bolt, double *Cstre
   double Y2 = *Cstress_Bolt + K * dStrain;
   double Y3 = Ksp * Tstrain - (fsy - Ksp * Vsy);
 
-
   *Tstress_Bolt = std::max(Y3, std::min(Y1, Y2));
 
   if (*Tstress_Bolt == Y2)
@@ -349,7 +348,6 @@ void Joint01::calculate_Bolt(double dStrain, double *Tstress_Bolt, double *Cstre
     *trialTangent += Kse * Kl / (Kse + Kl);
   }
 }
-
 
 // reference: /OpenSees/SRC/material/uniaxial/EPPGapMaterial.cpp line 140 - 172, 202 - 236
 void Joint01::calculate_Glubam(double *Tstrain, double *Tstress_Glubam, double *trialTangent,
@@ -364,7 +362,6 @@ void Joint01::calculate_Glubam(double *Tstrain, double *Tstress_Glubam, double *
   {
     Vdrop = new double(DBL_MAX);
   }
-
 
   // determine trial stress and tangent
   if (fy >= 0)
@@ -396,11 +393,10 @@ void Joint01::calculate_Glubam(double *Tstrain, double *Tstress_Glubam, double *
       *Tstress_Glubam = E * (trialStrain - *minElasticYieldStrain);
       *trialTangent += E;
     }
-
   }
   else
   {
-     if (trialStrain < -fabs(*Vdrop))
+    if (trialStrain < -fabs(*Vdrop))
     {
       *Tstress_Glubam = 0.8 * fy;
       *trialTangent += 0;
@@ -427,5 +423,4 @@ void Joint01::calculate_Glubam(double *Tstrain, double *Tstress_Glubam, double *
       *trialTangent += E;
     }
   }
-
 }
