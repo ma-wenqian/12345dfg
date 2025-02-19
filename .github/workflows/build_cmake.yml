@@ -54,7 +54,7 @@ jobs:
           conda create --name ops python=3.13
       - name: 2.3.2. Building the OpenSees Applications and Python module
         run: |
-          conda init
+          conda init zsh
           conda info
           conda activate ops
           which python
