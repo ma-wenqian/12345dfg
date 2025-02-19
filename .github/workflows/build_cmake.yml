@@ -29,7 +29,6 @@ jobs:
       # - name: XCode Command Line Tools is already installed.
       - name: Install other dependencies via Homebrew
         run: |
-         conda info
          ln -s /opt/homebrew/bin/gcc-13 /usr/local/bin/gcc
          ln -s /opt/homebrew/bin/gfortran-13 /usr/local/bin/gfortran
          brew install python
@@ -52,6 +51,8 @@ jobs:
           python-version: 3.13
       - name: 2.3.2. Building the OpenSees Applications and Python module
         run: |
+          conda info
+          which python
           mkdir build
           cd build
           cmake .. -DMUMPS_DIR=$PWD/../../mumps/build
