@@ -51,7 +51,6 @@ jobs:
           python-version: 3.13
       - name: 2.3.1. Creating a Conda Environment
         run:
-          conda info
           conda create --name ops python=3.13
       - name: 2.3.2. Building the OpenSees Applications and Python module
         run: |
