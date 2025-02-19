@@ -54,6 +54,7 @@ jobs:
         run: |
           conda info
           conda install cmake 
+          brew uninstall cmake
           which -a python
           which -a cmake
           mkdir build
