@@ -39,6 +39,8 @@ jobs:
          sudo ln -sf /opt/homebrew/include/eigen3/Eigen /opt/homebrew/include/Eigen
       - name: MUMPS
         run: |
+          conda info
+          conda create --name ops python=3.13
           git clone https://github.com/OpenSees/mumps.git
           cd mumps
           mkdir build
@@ -51,9 +53,8 @@ jobs:
           python-version: 3.13
       - name: 2.3.2. Building the OpenSees Applications and Python module
         run: |
-          conda info
-          conda create --name ops python=3.13
           conda init
+          conda info
           conda activate ops
           which python
           mkdir build
