@@ -52,7 +52,7 @@ jobs:
           python-version: 3.13
       - name: Conda info
         shell: bash -el {0}
-        run: 
+        run: |
           conda info
           which python
       - name: 2.3.2. Building the OpenSees Applications and Python module
