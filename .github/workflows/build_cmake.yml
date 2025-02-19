@@ -53,8 +53,9 @@ jobs:
         shell: bash -el {0}
         run: |
           conda info
-          which python
-          which python
+          conda install cmake 
+          which -a python
+          which -a cmake
           mkdir build
           cd build
           cmake .. -DMUMPS_DIR=$PWD/../../mumps/build
