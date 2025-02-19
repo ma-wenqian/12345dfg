@@ -35,6 +35,7 @@ jobs:
          conda info
          ln -s /opt/homebrew/bin/gcc-13 /usr/local/bin/gcc
          ln -s /opt/homebrew/bin/gfortran-13 /usr/local/bin/gfortran
+         brew install python
          brew install eigen
          brew install hdf5
          brew install open-mpi
