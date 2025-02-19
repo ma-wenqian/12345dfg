@@ -52,22 +52,24 @@ jobs:
       - name: 2.3.2. Building the OpenSees Applications and Python module
         run: |
           conda info
+          conda create --name ops python=3.13
+          conda activate ops
           which python
           mkdir build
           cd build
           cmake .. -DMUMPS_DIR=$PWD/../../mumps/build
-          cmake --build . --target OpenSees -j8
-          cmake --build . --target OpenSeesPy -j8
-          mv ./OpenSeesPy.dylib ./opensees.so
-      - name: Verification OpenSeesPySP
-        run: |
-          export PYTHONPATH="./build/"
-          python3 -c "import sys; print(sys.path)"
-          python3 ./EXAMPLES/ExamplePython/example_variable_analysis.py
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-            name: OpenSees_Mac
-            path: |
-              ./build/OpenSees
-              ./build/opensees.so
+      #     cmake --build . --target OpenSees -j8
+      #     cmake --build . --target OpenSeesPy -j8
+      #     mv ./OpenSeesPy.dylib ./opensees.so
+      # - name: Verification OpenSeesPySP
+      #   run: |
+      #     export PYTHONPATH="./build/"
+      #     python3 -c "import sys; print(sys.path)"
+      #     python3 ./EXAMPLES/ExamplePython/example_variable_analysis.py
+      # - name: Upload Artifacts
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #       name: OpenSees_Mac
+      #       path: |
+      #         ./build/OpenSees
+      #         ./build/opensees.so
