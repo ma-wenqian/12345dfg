@@ -54,8 +54,6 @@ jobs:
         run: |
           conda info
           which python
-      - name: 2.3.2. Building the OpenSees Applications and Python module
-        run: |
           which python
           mkdir build
           cd build
